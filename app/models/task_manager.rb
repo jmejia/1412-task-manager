@@ -1,21 +1,18 @@
 require 'yaml/store'
+require 'byebug'
 
 class TaskManager
   def self.database
     if ENV["TASK_MANAGER_ENV"] == 'test'
-      @database ||= YAML::Store.new("db/task_manager_test")
+      @database ||= Sequel.sqlite('db/task_manager_test.sqlite3')
     else
       @database ||= YAML::Store.new("db/task_manager")
     end
   end
 
   def self.create(task)
-    database.transaction do
-      database['tasks'] ||= []
-      database['total'] ||= 0
-      database['total'] += 1
-      database['tasks'] << { "id" => database['total'], "title" => task[:title], "description" => task[:description] }
-    end
+    task_attributes = { title: task[:title], description: task[:description] }
+    dataset.insert(task_attributes)
   end
 
   def self.all
@@ -41,21 +38,20 @@ class TaskManager
   end
 
   def self.delete_all
-    database.transaction do
-      database['tasks'] = []
-      database['total'] = 0
-    end
+    dataset.delete
   end
 
   private
 
+  def self.dataset
+    database[:tasks]
+  end
+
   def self.raw_task(id)
-    raw_tasks.find { |task| task["id"] == id }
+    dataset.where(:id => id).first
   end
 
   def self.raw_tasks
-    database.transaction do
-      database['tasks'] || []
-    end
+    dataset.to_a
   end
 end
