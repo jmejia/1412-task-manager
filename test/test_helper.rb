@@ -8,7 +8,7 @@ require 'minitest/autorun'
 require 'minitest/pride'
 require 'capybara'
 
-class ModelTest < Minitest::Test 
+class ModelTest < Minitest::Test
   def teardown
     TaskManager.delete_all
   end
